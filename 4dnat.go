@@ -84,8 +84,8 @@ func listener(listenPort0, listenPort1 string) {
 func loopAccept(cc chan net.Conn, listenPort string, ln net.Listener) {
 	for true {
 		fmt.Printf("[#] 4dnat waiting for client to connect port [%s]\n", listenPort)
-		c, err0 := accept(ln)
-		if err0 != nil {
+		c, err := accept(ln)
+		if err != nil {
 			continue
 		}
 		cc <- c
@@ -99,14 +99,15 @@ func forward(listenPort string, targetAddress string) {
 	for {
 		conn0, err := accept(ln)
 		if err != nil {
-			time.Sleep(time.Duration(RetryInterval) * time.Second)
 			continue
 		}
 		go func() {
+			fmt.Printf("[#] try to connect: [%s] \n", targetAddress)
 			// after server accept will be connect the target address,if failed will be retry.
 			for true {
 				conn1, err := dial(targetAddress)
 				if err != nil {
+					fmt.Printf("[#] retry to connect: [%s] after [%d] second\n", targetAddress, RetryInterval)
 					time.Sleep(time.Duration(RetryInterval) * time.Second)
 					continue
 				}
@@ -155,7 +156,7 @@ func mutualCopyIO(conn0, conn1 net.Conn) {
 func dial(targetAddress string) (net.Conn, error) {
 	conn, err := net.Dial("tcp", targetAddress)
 	if err != nil {
-		fmt.Printf("[x] connected [%s] error [%s].\n", targetAddress, err.Error())
+		fmt.Printf("[x] connect [%s] error [%s].\n", targetAddress, err.Error())
 		return conn, err
 	}
 	fmt.Printf("[+] [%s]->[%s] connected to target.\n", conn.LocalAddr().String(), targetAddress)
