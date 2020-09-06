@@ -58,31 +58,39 @@ func printBanner() {
 
 func copyIO(src, dest net.Conn, wg *sync.WaitGroup) {
 	defer src.Close()
-	defer dest.Close()
+	fmt.Printf("[#] [%s]->[%s] ==> [%s]->[%s]\n", src.RemoteAddr().String(), src.LocalAddr().String(), dest.LocalAddr().String(), dest.RemoteAddr().String())
 	_, _ = io.Copy(src, dest)
-	fmt.Printf("[-] [%s]--[%s] disconnected.\n", src.LocalAddr().String(), src.RemoteAddr().String())
-	fmt.Printf("[-] [%s]--[%s] disconnected.\n", dest.LocalAddr().String(), dest.RemoteAddr().String())
+	fmt.Printf("[-] [%s]->[%s] closed.\n", src.RemoteAddr().String(), src.LocalAddr().String())
 	wg.Done()
 }
 
 func listener(listenPort0, listenPort1 string) {
 	ln0 := listen(listenPort0)
 	ln1 := listen(listenPort1)
-	fmt.Printf("[#] 4dnat listen on: [%s] [%s]\n", listenPort0, listenPort1)
+	fmt.Printf("[#] 4dnat listen port on: [%s] [%s]\n", listenPort0, listenPort1)
 
-	for {
-		conn0, err0 := accept(ln0)
+	for true {
+		cc := make(chan net.Conn, 2)
+
+		go loopAccept(cc, listenPort0, ln0)
+		go loopAccept(cc, listenPort1, ln1)
+
+		conn0, conn1 := <-cc, <-cc
+		mutualCopyIO(conn0, conn1)
+	}
+
+}
+
+func loopAccept(cc chan net.Conn, listenPort string, ln net.Listener) {
+	for true {
+		fmt.Printf("[#] 4dnat waiting for client to connect port [%s]\n", listenPort)
+		c, err0 := accept(ln)
 		if err0 != nil {
 			continue
 		}
-		conn1, err1 := accept(ln1)
-		if err1 != nil {
-			continue
-		}
-
-		go establishChannel(conn0, conn1)
+		cc <- c
+		break
 	}
-
 }
 
 func forward(listenPort string, targetAddress string) {
@@ -103,7 +111,7 @@ func forward(listenPort string, targetAddress string) {
 					continue
 				}
 
-				go establishChannel(conn0, conn1)
+				go mutualCopyIO(conn0, conn1)
 				break
 			}
 		}()
@@ -131,12 +139,12 @@ func agent(targetAddress0 string, targetAddress1 string) {
 			continue
 		}
 
-		establishChannel(conn0, conn1)
+		mutualCopyIO(conn0, conn1)
 	}
 
 }
 
-func establishChannel(conn0 net.Conn, conn1 net.Conn) {
+func mutualCopyIO(conn0, conn1 net.Conn) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 	go copyIO(conn0, conn1, &wg)
@@ -167,7 +175,8 @@ func accept(ln net.Listener) (net.Conn, error) {
 func listen(listenPort string) net.Listener {
 	ln, err := net.Listen("tcp", ":"+listenPort)
 	if err != nil {
-		panic(err)
+		fmt.Printf("[x] listen error [%s].\n", err.Error())
+		os.Exit(0)
 	}
 	return ln
 }
