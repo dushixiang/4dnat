@@ -20,9 +20,7 @@ func main() {
 		os.Exit(-1)
 	}
 
-	mode := args[1]
-
-	switch mode {
+	switch args[1] {
 	case "-listen":
 	case "-l":
 		listener(args[2], args[3])
