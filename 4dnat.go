@@ -67,7 +67,6 @@ func copyIO(src, dest net.Conn, wg *sync.WaitGroup) {
 	wg.Done()
 }
 
-// 监听端口模式
 func listener(listenPort0, listenPort1 string) {
 	ln0 := listen(listenPort0)
 	ln1 := listen(listenPort1)
@@ -83,14 +82,11 @@ func listener(listenPort0, listenPort1 string) {
 			continue
 		}
 
-		go func() {
-			establishChannel(conn0, conn1)
-		}()
+		go establishChannel(conn0, conn1)
 	}
 
 }
 
-// 端口转发模式
 func forward(listenPort string, targetAddress string) {
 	ln := listen(listenPort)
 	fmt.Printf("[#] 4dnat listen on: [%s] forward to: [%s]\n", listenPort, targetAddress)
@@ -109,32 +105,30 @@ func forward(listenPort string, targetAddress string) {
 					continue
 				}
 
-				go func() {
-					establishChannel(conn0, conn1)
-				}()
+				go establishChannel(conn0, conn1)
 				break
 			}
 		}()
 	}
 }
 
-// 通道模式
 func agent(targetAddress0 string, targetAddress1 string) {
 
 	fmt.Printf("[#] 4dnat agent with: [%s] [%s]\n", targetAddress0, targetAddress1)
 
+	var conn0 net.Conn = nil
 	for {
-		conn0, err0 := dial(targetAddress0)
-		if err0 != nil {
-			time.Sleep(time.Duration(RetryInterval) * time.Second)
-			continue
+		if conn0 == nil {
+			conn, err0 := dial(targetAddress0)
+			if err0 != nil {
+				time.Sleep(time.Duration(RetryInterval) * time.Second)
+				continue
+			}
+			conn0 = conn
 		}
+
 		conn1, err1 := dial(targetAddress1)
 		if err1 != nil {
-			if conn0 != nil {
-				conn0.Close()
-				fmt.Printf("[-] [%s]--[%s] active disconnect.\n", conn0.LocalAddr().String(), conn0.RemoteAddr().String())
-			}
 			time.Sleep(time.Duration(RetryInterval) * time.Second)
 			continue
 		}
