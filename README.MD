@@ -64,6 +64,18 @@
     ssh username@65.22.33.44 -p 100001
     ```
 
+4. 代理模式
+
+    启动一个http代理
+    ```shell script
+    ./4dnat -proxy http 1080
+    ```
+   
+   启动一个https代理
+    ```shell script
+    ./4dnat -proxy https 1080 server.crt server.key
+    ```
+
 ## 其他
 - -forward 简写为-f
 - -listen 简写为-l
