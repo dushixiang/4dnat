@@ -63,7 +63,7 @@ func printBanner() {
 
 func copyIO(src, dest net.Conn, wg *sync.WaitGroup) {
 	defer src.Close()
-	log.Printf("[*] [%s->%s] ==> [%s->%s]\n", src.RemoteAddr().String(), src.LocalAddr().String(), dest.LocalAddr().String(), dest.RemoteAddr().String())
+	log.Printf("[*] [%s->%s] --> [%s->%s]\n", src.RemoteAddr().String(), src.LocalAddr().String(), dest.LocalAddr().String(), dest.RemoteAddr().String())
 	_, _ = io.Copy(src, dest)
 	log.Printf("[-] [%s->%s] closed.\n", src.RemoteAddr().String(), src.LocalAddr().String())
 	wg.Done()
@@ -175,7 +175,7 @@ func proxy(protocol, listenAddress string, args []string) {
 		Addr: listenAddress,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Method == http.MethodConnect {
-				handleWebSocket(w, r)
+				handleTunneling(w, r)
 			} else {
 				handleHttp(w, r)
 			}
@@ -198,7 +198,7 @@ func proxy(protocol, listenAddress string, args []string) {
 	}
 }
 
-func handleWebSocket(w http.ResponseWriter, r *http.Request) {
+func handleTunneling(w http.ResponseWriter, r *http.Request) {
 	remoteConn, err := net.DialTimeout("tcp", r.Host, time.Duration(Timeout)*time.Second)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
