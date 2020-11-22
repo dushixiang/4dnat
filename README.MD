@@ -70,6 +70,8 @@
 
 期望目标**目标机器**可以上网，如使用yum安装软件。
   ![请输入图片描述](https://oss.typesafe.cn/break-through-the-network2.png)
+  
+> 只是为了体现各种功能而设计的场景，请按照公司的规范进行操作。
 
 1. 在**用户电脑**上开启一个http代理
   ```bash
