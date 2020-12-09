@@ -82,10 +82,10 @@ func copyIO(src, dest net.Conn, wg *sync.WaitGroup) {
 func mutualCopyIO(conn0, conn1 net.Conn) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
-	log.Printf("[*] [%s <-> %s] <--> [%s <-> %s]\n", conn0.RemoteAddr().String(), conn0.LocalAddr().String(), conn1.LocalAddr().String(), conn1.RemoteAddr().String())
+	log.Printf("[*] [%s <-> %s] :) [%s <-> %s]\n", conn0.RemoteAddr().String(), conn0.LocalAddr().String(), conn1.LocalAddr().String(), conn1.RemoteAddr().String())
 	go copyIO(conn0, conn1, &wg)
 	go copyIO(conn1, conn0, &wg)
-	log.Printf("[-] [%s <-> %s] ~~~~ [%s <-> %s]\n", conn0.RemoteAddr().String(), conn0.LocalAddr().String(), conn1.LocalAddr().String(), conn1.RemoteAddr().String())
+	log.Printf("[-] [%s <-> %s] :( [%s <-> %s]\n", conn0.RemoteAddr().String(), conn0.LocalAddr().String(), conn1.LocalAddr().String(), conn1.RemoteAddr().String())
 	wg.Wait()
 }
 
