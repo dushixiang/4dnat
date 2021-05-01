@@ -1,42 +1,44 @@
 # [4DNAT](https://github.com/dushixiang/4dnat)
 
-4DNAT取名源自4和DNAT。这个工具工作在OSI模型的第四层传输层，同时4和for谐音，意为专门为目标地址转换而服务的工具。4DNAT使用go语言开发，具有天然的跨平台性，并且完全使用go标准库开发，没有任何的第三方依赖，编译之后只有一个二进制可执行文件。它有4种工作模式：
+[中文文档](README_zh.MD)
 
-### 转发模式
+The 4DNAT was named from 4 and DNAT. This tool works in the fourth layer of transport layer of the OSI model, while 4 and for sound, means a tool that is dedicated to the target address conversion. 4dnat develops using Go language, has natural cross-platform, and uses the GO standard library development, without any third-party dependence, only one binary executable after compiling. It has four working modes:
 
-接受两个参数，监听端口和目标地址，在监听端口接收到请求后会主动连接目标地址，示例：
+### Forward
+
+Accept two parameters, listen port, and destination addresses, actively connect the target address after receiving the request in the listening port, example:
 
 ```bash
 ./4dnat -forward 2222 192.168.1.100:22
 ```
 
-### 监听模式
+### Listen
 
-接受两个参数，监听端口1和监听端口2，并交换两个端口接收到的数据，示例：
+Accept two parameters, listen port 1 and monitor port 2, and exchange data received by two ports, example:
 
 ```bash
 ./4dnat -listen 10000 10001
 ```
 
-### 代理人模式
+### Agent
 
-接受两个参数，目标地址1和目标地址2，启动后会主动连接这两个目标地址，并交换两个端口接收到的数据，示例：
+Accept two parameters, target addresses 1, and destination address 2, actively connect these two target addresses after startup, and exchange data received by the two ports, example:
 
 ```bash
 ./4dnat -agent 127.0.0.1:10000 127.0.0.1:22
 ```
 
-### http/https代理模式
+### http/https proxy
 
-接受两个参数或四个参数，代理类型、监听端口、证书路径和私钥路径，示例：
+Accept two parameters or four parameters, proxy types, listener ports, certificate paths, and private key paths, examples:
 
-#### http代理
+#### http proxy
 
 ```shell script
 ./4dnat -proxy http 1080
 ```
 
-#### https代理
+#### https proxy
 
 ```shell script
 ./4dnat -proxy https 1080 server.crt server.key
