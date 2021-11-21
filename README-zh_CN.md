@@ -1,4 +1,8 @@
-# [4DNAT](https://github.com/dushixiang/4dnat)
+# 4DNAT
+
+[English](./README.MD) | 简体中文
+
+## 简介
 
 4DNAT取名源自4和DNAT。这个工具工作在OSI模型的第四层传输层，同时4和for谐音，意为专门为目标地址转换而服务的工具。4DNAT使用go语言开发，具有天然的跨平台性，并且完全使用go标准库开发，没有任何的第三方依赖，编译之后只有一个二进制可执行文件。它有4种工作模式：
 

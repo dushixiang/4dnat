@@ -1,6 +1,8 @@
-# [4DNAT](https://github.com/dushixiang/4dnat)
+# 4DNAT
 
-[中文文档](README_zh.MD)
+English | [简体中文](./README-zh_CN.md)
+
+## Introduction
 
 The 4DNAT was named from 4 and DNAT. This tool works in the fourth layer of transport layer of the OSI model, while 4 and for sound, means a tool that is dedicated to the target address conversion. 4dnat develops using Go language, has natural cross-platform, and uses the GO standard library development, without any third-party dependence, only one binary executable after compiling. It has four working modes:
 

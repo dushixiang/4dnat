@@ -16,7 +16,7 @@ import (
 
 const RetryInterval int = 5
 const Timeout int = 10
-const Version = "v0.0.4"
+const Version = "v0.0.5"
 
 func init() {
 	log.SetPrefix("[4dnat] ")
@@ -82,10 +82,8 @@ func copyIO(src, dest net.Conn, wg *sync.WaitGroup) {
 func mutualCopyIO(conn0, conn1 net.Conn) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
-	log.Printf("[*] [%s <-> %s] :) [%s <-> %s]\n", conn0.RemoteAddr().String(), conn0.LocalAddr().String(), conn1.LocalAddr().String(), conn1.RemoteAddr().String())
 	go copyIO(conn0, conn1, &wg)
 	go copyIO(conn1, conn0, &wg)
-	log.Printf("[-] [%s <-> %s] :( [%s <-> %s]\n", conn0.RemoteAddr().String(), conn0.LocalAddr().String(), conn1.LocalAddr().String(), conn1.RemoteAddr().String())
 	wg.Wait()
 }
 
@@ -115,7 +113,7 @@ func forward(listenPort string, targetAddress string) {
 			log.Printf("[x] accept error [%s]\n", err.Error())
 			continue
 		}
-		log.Printf("[+] [%s <- %s] new client connected\n", conn0.LocalAddr().String(), conn0.RemoteAddr().String())
+		log.Printf("[+] new client [%s] connected [%s]\n", conn0.RemoteAddr().String(), conn0.LocalAddr().String())
 
 		go handleForward(targetAddress, conn0)
 	}
@@ -130,6 +128,8 @@ func handleForward(targetAddress string, conn0 net.Conn) {
 	}
 
 	mutualCopyIO(conn0, conn1)
+
+	log.Printf("[-] client [%s] disconnected\n", conn0.RemoteAddr().String())
 }
 
 func agent(targetAddress0 string, targetAddress1 string) {
@@ -137,27 +137,30 @@ func agent(targetAddress0 string, targetAddress1 string) {
 	for {
 		conn0, err := net.DialTimeout("tcp", targetAddress0, time.Duration(Timeout)*time.Second)
 		if err != nil {
-			log.Printf("[x] connect [%s] error [%s]\n", targetAddress0, err.Error())
-			log.Printf("[*] retry to connect: [%s] after [%d] second\n", targetAddress0, RetryInterval)
+			log.Printf("[x] connect to [%s] error [%s]\n", targetAddress0, err.Error())
+			log.Printf("[*] retry to connect to [%s] after [%d] second\n", targetAddress0, RetryInterval)
 			time.Sleep(time.Duration(RetryInterval) * time.Second)
 			continue
 		}
-		log.Printf("[+] [%s <-> %s] connected to target\n", conn0.LocalAddr().String(), targetAddress0)
+		log.Printf("[+] connect to [%s] success\n", targetAddress0)
 
 		var conn1 net.Conn
 		for {
 			conn1, err = net.DialTimeout("tcp", targetAddress1, time.Duration(Timeout)*time.Second)
 			if err != nil {
-				log.Printf("[x] connect [%s] error [%s]\n", targetAddress1, err.Error())
-				log.Printf("[*] retry to connect: [%s] after [%d] second\n", targetAddress1, RetryInterval)
+				log.Printf("[x] connect to [%s] error [%s]\n", targetAddress1, err.Error())
+				log.Printf("[*] retry to connect to [%s] after [%d] second\n", targetAddress1, RetryInterval)
 				time.Sleep(time.Duration(RetryInterval) * time.Second)
 				continue
 			}
-			log.Printf("[+] [%s <-> %s] connected to target\n", conn1.LocalAddr().String(), targetAddress1)
+			log.Printf("[+] connect to [%s] success\n", targetAddress1)
 			break
 		}
 
 		mutualCopyIO(conn0, conn1)
+		log.Printf("[-] disconnected form [%s]\n", conn0.RemoteAddr().String())
+		log.Printf("[-] disconnected form [%s]\n", conn1.RemoteAddr().String())
+		break
 	}
 }
 
@@ -169,7 +172,7 @@ func accept(cc chan net.Conn, ln net.Listener) {
 			log.Printf("[x] accept error [%s]\n", err.Error())
 			continue
 		}
-		log.Printf("[+] [%s <- %s] new client connected\n", c.LocalAddr().String(), c.RemoteAddr().String())
+		log.Printf("[+] new client [%s] connected [%s]\n", c.RemoteAddr().String(), c.LocalAddr().String())
 		cc <- c
 		break
 	}
@@ -205,7 +208,7 @@ func proxy(protocol, listenAddress string, args []string) {
 				log.Printf("[x] accept error [%s]\n", err.Error())
 				continue
 			}
-			log.Printf("[+] [%s <- %s] new client connected\n", conn0.LocalAddr().String(), conn0.RemoteAddr().String())
+			log.Printf("[+] new client [%s] connected [%s]\n", conn0.RemoteAddr().String(), conn0.LocalAddr().String())
 
 			go handleSocks5(conn0)
 		}
@@ -240,14 +243,14 @@ func proxy(protocol, listenAddress string, args []string) {
 
 func parseTargetAddress(c net.Conn) (string, error) {
 	var buf [1024]byte
-	n, err := c.Read(buf[:])
+	_, err := c.Read(buf[:])
 	if err != nil {
 		return "", err
 	}
 
 	if buf[0] == 0x05 {
 		_, _ = c.Write([]byte{0x05, 0x00})
-		n, err = c.Read(buf[:])
+		n, err := c.Read(buf[:])
 		if err != nil {
 			return "", err
 		}
@@ -282,7 +285,7 @@ func handleSocks5(conn0 net.Conn) {
 		_, _ = conn0.Write([]byte(err.Error()))
 		return
 	}
-	log.Printf("[+] [%s -> %s] connected to target\n", conn1.LocalAddr().String(), targetAddress)
+	log.Printf("[+] connect to [%s] success\n", targetAddress)
 
 	_, _ = conn0.Write([]byte{0x05, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})
 
